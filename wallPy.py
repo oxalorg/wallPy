@@ -7,7 +7,6 @@ import hashNinja
 import warnings
 import logging
 
-img_checked = 0
 config = {'MIN_IMG_HT': 800, 'MIN_IMG_WT': 800, 'NSFW': False}
 
 r = praw.Reddit(user_agent="linux:wallPy:v0.0.2 (by /u/MiteshNinja)")
@@ -27,11 +26,8 @@ def supress_warnings(func):
 
 def progress_output(post, final_img):
     if final_img:
-        print("Total images checked: {}".format(img_checked - 1))
         print("Selected image details:")
-        print(post)
-    print("{:->4}".format(post.score) + " :: " + post.title)
-    print("Images checked: {}\033[F".format(img_checked - 1), end='')
+        print(post.title)
 
 
 def get_image_url(post):
@@ -89,14 +85,17 @@ def main():
     image_set = False
     submissions = r.get_multireddit('MiteshNinja',
                                     'wallpaper_generic').get_hot(limit=None)
+    img_checked = 0
+    from timeit import default_timer as timer
     while not image_set:
         try:
-            global img_checked
+            print("\rImages checked: {}".format(img_checked), end='')
             img_checked += 1
             post = next(submissions)
             image_url = get_image_url(post)
             if not image_url:
                 continue
+
             image_file_uri = get_image(post, image_url)
             if not image_file_uri:
                 continue
@@ -113,9 +112,10 @@ def main():
                 image_set = False
             else:
                 add_image_hash(image_hash)
-                image_set = True
+                ans = input('iz thiz imaze k00l? y/n :').lower()
+                image_set = True if ans == 'y' else False
+                continue
                 progress_output(post, True)
-                return True
         except KeyboardInterrupt:
             print('Exiting...')
             return False
